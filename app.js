@@ -16,8 +16,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-
+/** @You_may_need_to_change_these */
 const videosPath = path.join(os.homedir(),"Downloads")
+const SERVER_HOST = "http://localhost:3000"
+/** @U-------------------------- */
 
 const contentTypeMap = {
   '.mp4': 'video/mp4',
@@ -39,7 +41,7 @@ const showAllAvailablevideos = async (req,res,next) =>{
       return contentTypeMap[fileExtension];
     })
 
-    const linkList = filteredFiles.map(link => `<li><a href="http://192.168.43.180:3000/v/${link.split('.')[0]}?s=1">${link}</a></li>`).join('');
+    const linkList = filteredFiles.map(link => `<li><a href="${SERVER_HOST}/v/${link.split('.')[0]}?s=1">${link}</a></li>`).join('');
     const html = `<html><body><h1 style="text-align : left;">My videos v1.0</h1><ul>${linkList}</ul></body></html>`;
 
     res.send(html)
