@@ -17,7 +17,7 @@ Before running this app, you should have Node.js and npm (Node Package Manager) 
     `npm install`
 - Open `app.js` and modify the `videosPath` constant to point to the directory containing your videos. By default, it's set to the `Downloads` folder in your home directory.
 
-- Change `SERVER_HOST` to your machine ip address or. By default it is localhost.
+- If an error occured, you may need to Change `SERVER_HOST` to your machine ip address manually . By default it will match the os ip address.
 
 - Run the following command to start the app:
   

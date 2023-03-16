@@ -16,9 +16,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+
+
 /** @You_may_need_to_change_these */
-const videosPath = path.join(os.homedir(),"Downloads")
-const SERVER_HOST = "http://localhost:3000"
+const videosPath = path.join(os.homedir(), "Downloads")
+const SERVER_HOST = `http://${getLocalIpAddress()}:3000`;
 /** @U-------------------------- */
 
 const contentTypeMap = {
@@ -32,11 +34,24 @@ const contentTypeMap = {
   '.ogg': 'video/ogg',
 };
 
-const showAllAvailablevideos = async (req,res,next) =>{
+function getLocalIpAddress() {
+  const interfaces = os.networkInterfaces();
+  for (const ifaceName in interfaces) {
+    const iface = interfaces[ifaceName];
+    for (const alias of iface) {
+      if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
+        return alias.address;
+      }
+    }
+  }
+  return 'localhost';
+}
+
+const showAllAvailablevideos = async (req, res, next) => {
 
   try {
     const files = await fs.promises.readdir(videosPath);
-    const filteredFiles = files.filter((file)=> {
+    const filteredFiles = files.filter((file) => {
       const fileExtension = path.extname(file);
       return contentTypeMap[fileExtension];
     })
@@ -45,7 +60,7 @@ const showAllAvailablevideos = async (req,res,next) =>{
     const html = `<html><body><h1 style="text-align : left;">My videos v1.0</h1><ul>${linkList}</ul></body></html>`;
 
     res.send(html)
-    
+
   }
   catch (e) {
     console.error(e);
@@ -54,7 +69,7 @@ const showAllAvailablevideos = async (req,res,next) =>{
 }
 
 
-app.get('/d' , showAllAvailablevideos);
+app.get('/d', showAllAvailablevideos);
 
 app.get('/v/:n', async (req, res) => {
   const video_name = decodeURIComponent(req.params.n);
@@ -73,9 +88,9 @@ app.get('/v/:n', async (req, res) => {
   const range = req.headers.range;
 
   if (range) {
-  console.log("🚀 ~ file: app.js:49 ~ app.get ~ range:", range)
+    console.log("🚀 ~ file: app.js:49 ~ app.get ~ range:", range)
 
-    
+
     const parts = range.replace(/bytes=/, '').split('-');
     const start = parseInt(parts[0], 10);
     const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
@@ -89,10 +104,9 @@ app.get('/v/:n', async (req, res) => {
       'Content-Type': video.type,
     };
 
-    if(!isStream)
-    {
+    if (!isStream) {
       console.log("first")
-      headers["Content-Disposition"] = `attachment; filename=${video_name+video.ext}`
+      headers["Content-Disposition"] = `attachment; filename=${video_name + video.ext}`
     }
     console.log("🚀 ~ file: app.js:65 ~ app.get ~ headers:", headers)
 
@@ -104,10 +118,9 @@ app.get('/v/:n', async (req, res) => {
       'Content-Type': video.type,
     };
 
-    if(!isStream)
-    {
+    if (!isStream) {
       console.log("second")
-      headers["Content-Disposition"] = `attachment; filename=${video_name+video.ext}`
+      headers["Content-Disposition"] = `attachment; filename=${video_name + video.ext}`
     }
 
     res.writeHead(200, headers);
@@ -117,7 +130,7 @@ app.get('/v/:n', async (req, res) => {
 
 
 function isExistFile() {
- return fs.existsSync(videosPath);
+  return fs.existsSync(videosPath);
 }
 
 const searchVideo = async (videoName) => {
@@ -131,9 +144,9 @@ const searchVideo = async (videoName) => {
     if (videoFile) {
       const ext = path.extname(path.join(videosPath, videoFile));
       return {
-        path : path.join(videosPath, videoFile),
-        type : contentTypeMap[ext] || 'application/octet-stream',
-        ext 
+        path: path.join(videosPath, videoFile),
+        type: contentTypeMap[ext] || 'application/octet-stream',
+        ext
       }
     }
     console.log('Video not found');
@@ -145,14 +158,14 @@ const searchVideo = async (videoName) => {
 
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   next(createError(404));
 });
 
 
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
