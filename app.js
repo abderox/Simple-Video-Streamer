@@ -4,7 +4,9 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var fs = require('fs');
-const os = require('os')
+const os = require('os');
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
 
 
 var app = express();
@@ -20,8 +22,35 @@ app.use(cookieParser());
 
 /** @You_may_need_to_change_these */
 const videosPath = path.join(os.homedir(), "Downloads")
-const SERVER_HOST = `http://${getLocalIpAddress()}:3000`;
+let SERVER_HOST = `http://localhost:3000`;
 /** @U-------------------------- */
+
+(async function getIpAddress() {
+  try {
+    const { stdout } = await exec('ipconfig');
+    const match = stdout.match(/IPv4 Address[\.\s]+:\s+([\d\.]+)/gi);
+    console.log("🚀 ~ file: app.js:46 ~ exec ~ match:", match)
+
+    if (match) {
+      const current = match[0];
+      for (const ip of match) {
+        if (ip !== current && ip.length > current.length) {
+          console.log(ip.split(':')[1].trim())
+          SERVER_HOST = `http://${ip.split(':')[1].trim()}:3000` ;
+        }
+      }
+    }
+    else {
+      console.error(`No IP address found`);
+      SERVER_HOST = "http://localhost:3000"
+    }
+  } catch (error) {
+    console.error(`Error executing ipconfig: ${error}`);
+    SERVER_HOST = "http://localhost:3000";
+  }
+})()
+
+console.log(SERVER_HOST)
 
 const contentTypeMap = {
   '.mp4': 'video/mp4',
@@ -34,17 +63,31 @@ const contentTypeMap = {
   '.ogg': 'video/ogg',
 };
 
-function getLocalIpAddress() {
-  const interfaces = os.networkInterfaces();
-  for (const ifaceName in interfaces) {
-    const iface = interfaces[ifaceName];
-    for (const alias of iface) {
-      if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
-        return alias.address;
+
+
+async function getIpAddress() {
+  try {
+    const { stdout } = await exec('ipconfig');
+    const match = stdout.match(/IPv4 Address[\.\s]+:\s+([\d\.]+)/gi);
+    console.log("🚀 ~ file: app.js:46 ~ exec ~ match:", match)
+
+    if (match) {
+      const current = match[0];
+      for (const ip of match) {
+        if (ip !== current && ip.length > current.length) {
+          console.log("🚀 ~ file: app.js:51 ~ exec ~ ip:", ip.split(':')[1].trim())
+          return ip.split(':')[1].trim();
+        }
       }
     }
+    else {
+      console.error(`No IP address found`);
+      return "localhost"
+    }
+  } catch (error) {
+    console.error(`Error executing ipconfig: ${error}`);
+    return "localhost";
   }
-  return 'localhost';
 }
 
 const showAllAvailablevideos = async (req, res, next) => {
